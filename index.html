@@ -69,6 +69,7 @@
         .card.active {
             border-color: var(--accent-color);
             box-shadow: 0 0 25px rgba(10, 132, 255, 0.5);
+            cursor: pointer; /* 클릭 가능함을 나타내는 커서 */
         }
 
         /* --- 카드 콘텐츠 --- */
@@ -94,26 +95,22 @@
             const body = document.body;
 
             // ===================================================================
-            // --- 여기에 자신의 사진과 비디오를 추가하세요 ---
+            // --- 여기에 자신의 사진, 비디오, 그리고 연결될 링크를 추가하세요 ---
             // ===================================================================
-            // data: '여기에 파일 경로 또는 웹 주소(URL)를 넣으세요.'
+            // data: '파일 경로 또는 웹 주소(URL)'
+            // link: '클릭 시 이동할 페이지 주소'
             //
-            // 예시 1: (같은 폴더에 파일이 있을 경우)
-            // { type: 'image/', data: 'my-photo.jpg', name: '내 사진' }
-            //
-            // 예시 2: (images 폴더 안에 파일이 있을 경우)
-            // { type: 'image/', data: 'images/artwork.png', name: '내 작품' }
-            //
-            // 예시 3: (웹에 있는 이미지 주소)
-            // { type: 'image/', data: 'https://www.example.com/photo.jpg', name: '웹 사진' }
+            // 예시:
+            // { type: 'image/', data: 'images/artwork.png', name: '내 작품', link: 'project-page.html' }
+            // { type: 'image/', data: 'photo.jpg', name: '내 사진', link: 'https://github.com' }
             //
             const items = [
-                { type: 'image/', data: 'https://placehold.co/800x600/f8b400/ffffff?text=My+First+Photo', name: '내 첫 번째 사진' },
-                { type: 'video/', data: 'https://www.w3schools.com/html/mov_bbb.mp4', name: '샘플 비디오' },
-                { type: 'image/', data: 'https://placehold.co/800x600/e85a4f/ffffff?text=Artwork', name: '내 작품' },
-                { type: 'image/', data: 'https://placehold.co/800x600/8e8d8a/ffffff?text=Travel', name: '여행 사진' },
-                { type: 'image/', data: 'https://placehold.co/800x600/5c5d7d/ffffff?text=Portfolio', name: '포트폴리오' },
-                { type: 'image/', data: 'interaction3.png', name: '새 이미지' }
+                { type: 'image/', data: 'https://placehold.co/800x600/f8b400/ffffff?text=Project+A', name: '프로젝트 A', link: 'https://github.com' },
+                { type: 'video/', data: 'https://www.w3schools.com/html/mov_bbb.mp4', name: '프로젝트 B', link: 'https://www.w3schools.com' },
+                { type: 'image/', data: 'https://placehold.co/800x600/e85a4f/ffffff?text=Project+C', name: '프로젝트 C', link: '#' },
+                { type: 'image/', data: 'interaction3.png', name: '새 이미지', link: 'project-detail.html' },
+                { type: 'image/', data: 'https://placehold.co/800x600/8e8d8a/ffffff?text=Project+D', name: '프로젝트 D', link: '#' },
+                { type: 'image/', data: 'https://placehold.co/800x600/5c5d7d/ffffff?text=Project+E', name: '프로젝트 E', link: '#' }
             ];
             // ===================================================================
 
@@ -134,6 +131,14 @@
                 const card = document.createElement('div');
                 card.className = 'card';
 
+                // 카드 클릭 시 링크로 이동하는 이벤트 리스너 추가
+                card.addEventListener('click', () => {
+                    // 카드가 중앙에 활성화된 상태이고, 링크가 있을 때만 이동
+                    if (card.classList.contains('active') && item.link) {
+                        window.open(item.link, '_blank'); // 새 탭에서 링크 열기
+                    }
+                });
+
                 if (item.type.startsWith('image/')) {
                     const img = document.createElement('img');
                     img.src = item.data;
@@ -145,6 +150,11 @@
                     video.controls = true;
                     video.muted = true; // 자동재생을 위해 음소거
                     video.loop = true;  // 반복재생
+                    
+                    // 비디오 컨트롤 클릭 시 카드 링크가 실행되는 것을 방지
+                    video.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                    });
                     card.appendChild(video);
                 }
                 return card;
@@ -188,6 +198,15 @@
 
             /** 키보드 네비게이션을 처리합니다 */
             function handleKeyDown(e) {
+                // Enter 키를 누르면 활성화된 카드의 링크로 이동
+                if (e.key === 'Enter') {
+                    const activeItem = items[currentIndex];
+                    if (activeItem && activeItem.link) {
+                        window.open(activeItem.link, '_blank');
+                        return; // 다른 키보드 이벤트 중지
+                    }
+                }
+
                 if (items.length <= 1) return;
                 if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
                     currentIndex = (currentIndex + 1) % items.length;
