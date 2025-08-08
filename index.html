@@ -10,7 +10,6 @@
             --background-color: #1c1c1e;
             --card-background: #2c2c2e;
             --text-color: #f2f2f7;
-            /* 파란색 대신 은은한 흰색으로 변경 */
             --accent-color: #ffffff; 
             --shadow-color: rgba(0, 0, 0, 0.5);
             --transition-speed: 0.7s;
@@ -18,26 +17,40 @@
 
         body {
             margin: 0;
-            /* 배경색은 비디오가 로드되지 않을 때를 대비해 유지 */
             background-color: var(--background-color);
             color: var(--text-color);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
         }
 
-        /* --- 배경 비디오 스타일 --- */
-        #background-video {
+        /* --- 배경 컨테이너 및 미디어 스타일 --- */
+        #background-container {
             position: fixed;
             right: 0;
             bottom: 0;
             min-width: 100%;
             min-height: 100%;
-            width: auto;
-            height: auto;
-            z-index: -100; /* 다른 모든 콘텐츠 뒤에 위치 */
-            object-fit: cover; /* 화면을 꽉 채우도록 설정 */
-            filter: brightness(0.4); /* 비디오를 어둡게 하여 텍스트 가독성 확보 */
+            width: 100vw;
+            height: 100vh;
+            z-index: -100;
         }
+        
+        .background-media {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.4);
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .background-media.active {
+            opacity: 1;
+        }
+
 
         /* --- 뷰 전환 컨테이너 --- */
         .view {
@@ -96,7 +109,6 @@
         
         .card.active {
             border-color: var(--accent-color);
-            /* 흰색 빛이 은은하게 퍼지도록 box-shadow 수정 */
             box-shadow: 0 0 35px rgba(255, 255, 255, 0.3);
             cursor: pointer;
         }
@@ -152,11 +164,8 @@
 </head>
 <body>
 
-    <!-- 배경 비디오: src 부분을 원하는 비디오 파일 경로로 바꾸세요. -->
-    <video autoplay muted loop id="background-video">
-        <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-        브라우저가 비디오 태그를 지원하지 않습니다.
-    </video>
+    <!-- 배경 미디어를 담을 컨테이너 -->
+    <div id="background-container"></div>
 
     <!-- 커버 플로우 뷰 -->
     <div id="coverflow-view" class="view">
@@ -176,6 +185,7 @@
             // 뷰 엘리먼트
             const coverflowView = document.getElementById('coverflow-view');
             const detailView = document.getElementById('detail-view');
+            const backgroundContainer = document.getElementById('background-container');
 
             // 커버 플로우 관련 엘리먼트
             const carousel = document.querySelector('.carousel');
@@ -185,25 +195,58 @@
             const backButton = document.querySelector('.back-button');
 
             // ===================================================================
-            // --- 여기에 자신의 사진, 비디오, 그리고 프로젝트 설명을 추가하세요 ---
+            // --- 여기에 프로젝트 정보와 각 프로젝트의 '배경'을 추가하세요 ---
+            // backgroundType: 'image' 또는 'video'
+            // background: 배경 파일의 경로
             // ===================================================================
             const items = [
-                { type: 'image', data: 'https://placehold.co/1200x900/f8b400/ffffff?text=Project+A', name: '프로젝트 A', description: '이것은 프로젝트 A에 대한 설명입니다. React와 Node.js를 사용하여 만들었습니다. 사용자의 편의성을 최우선으로 고려하여 디자인했습니다.' },
-                { type: 'video', data: 'https://www.w3schools.com/html/mov_bbb.mp4', name: '프로젝트 B', description: '프로젝트 B는 영상 처리 기술을 활용한 인터랙티브 아트워크입니다. 실시간으로 사용자의 움직임에 반응합니다.' },
-                { type: 'image', data: 'https://placehold.co/1200x900/e85a4f/ffffff?text=Project+C', name: '프로젝트 C', description: '세 번째 프로젝트는 데이터 시각화에 초점을 맞춘 작업물입니다. 복잡한 데이터를 이해하기 쉽게 표현했습니다.' },
-                { type: 'image', data: 'interaction3.png', name: '새 이미지', description: '이 이미지는 새로운 인터랙션 디자인 시안입니다. 사용자의 참여를 유도하는 동적인 경험을 제공합니다.' },
-                { type: 'image', data: 'https://placehold.co/1200x900/8e8d8a/ffffff?text=Project+D', name: '프로젝트 D', description: '네 번째 프로젝트에 대한 설명입니다. 미니멀리즘 디자인 철학을 바탕으로 제작되었습니다.' },
-                { type: 'image', data: 'https://placehold.co/1200x900/5c5d7d/ffffff?text=Project+E', name: '프로젝트 E', description: '마지막 프로젝트는 사용성과 미학을 모두 고려한 디자인입니다. 접근성을 높이는 데 많은 노력을 기울였습니다.' }
+                { type: 'image', data: 'https://placehold.co/1200x900/f8b400/ffffff?text=Project+A', name: '프로젝트 A', description: '이것은 프로젝트 A에 대한 설명입니다.', backgroundType: 'image', background: 'https://images.unsplash.com/photo-1550684376-efcbd6e3f031?q=80&w=2070&auto=format&fit=crop' },
+                { type: 'video', data: 'https://www.w3schools.com/html/mov_bbb.mp4', name: '프로젝트 B', description: '프로젝트 B는 영상 처리 기술을 활용한 인터랙티브 아트워크입니다.', backgroundType: 'video', background: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+                { type: 'image', data: 'https://placehold.co/1200x900/e85a4f/ffffff?text=Project+C', name: '프로젝트 C', description: '세 번째 프로젝트는 데이터 시각화에 초점을 맞춘 작업물입니다.', backgroundType: 'image', background: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&w=1974&auto=format&fit=crop' },
+                { type: 'image', data: 'interaction3.png', name: '새 이미지', description: '이 이미지는 새로운 인터랙션 디자인 시안입니다.', backgroundType: 'image', background: 'interaction3.png' },
+                { type: 'image', data: 'https://placehold.co/1200x900/8e8d8a/ffffff?text=Project+D', name: '프로젝트 D', description: '네 번째 프로젝트에 대한 설명입니다.', backgroundType: 'image', background: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?q=80&w=2070&auto=format&fit=crop' },
+                { type: 'image', data: 'https://placehold.co/1200x900/5c5d7d/ffffff?text=Project+E', name: '프로젝트 E', description: '마지막 프로젝트는 사용성과 미학을 모두 고려한 디자인입니다.', backgroundType: 'image', background: 'https://images.unsplash.com/photo-1559244673-9cee88d5519e?q=80&w=1964&auto=format&fit=crop' }
             ];
             // ===================================================================
 
             let coverflowIndex = 0;
             let detailIndex = 0;
 
+            // --- 배경 관련 함수 ---
+            function renderBackgrounds() {
+                items.forEach(item => {
+                    let bgElement;
+                    if (item.backgroundType === 'image') {
+                        bgElement = document.createElement('img');
+                    } else if (item.backgroundType === 'video') {
+                        bgElement = document.createElement('video');
+                        bgElement.muted = true;
+                        bgElement.loop = true;
+                        bgElement.autoplay = true;
+                        bgElement.playsInline = true;
+                    }
+                    bgElement.src = item.background;
+                    bgElement.className = 'background-media';
+                    backgroundContainer.appendChild(bgElement);
+                });
+            }
+
+            function updateBackground(index) {
+                const backgrounds = document.querySelectorAll('.background-media');
+                backgrounds.forEach((bg, i) => {
+                    if (i === index) {
+                        bg.classList.add('active');
+                        if(bg.tagName === 'VIDEO') bg.play().catch(e=>{});
+                    } else {
+                        bg.classList.remove('active');
+                    }
+                });
+            }
+
             // --- 뷰 전환 함수 ---
             function showDetailView(index) {
                 detailIndex = index;
-                pageContainer.style.transition = 'none'; // 전환 애니메이션 없이 바로 이동
+                pageContainer.style.transition = 'none';
                 updatePagePosition();
                 
                 setTimeout(() => {
@@ -215,6 +258,7 @@
             }
 
             function showCoverflowView() {
+                updateBackground(coverflowIndex); // 커버플로우 뷰로 돌아갈 때 배경 동기화
                 detailView.classList.add('hidden');
                 coverflowView.classList.remove('hidden');
             }
@@ -275,6 +319,7 @@
                     card.style.opacity = Math.abs(offset) > 2 ? '0' : '1';
                     card.style.pointerEvents = 'auto';
                 });
+                updateBackground(coverflowIndex); // 커버플로우 넘길 때 배경 업데이트
             }
 
             // --- 상세 페이지 로직 ---
@@ -332,16 +377,20 @@
                     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
                         detailIndex = (detailIndex + 1) % items.length;
                         updatePagePosition();
+                        updateBackground(detailIndex); // 상세페이지 넘길 때 배경 업데이트
                     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
                         detailIndex = (detailIndex - 1 + items.length) % items.length;
                         updatePagePosition();
+                        updateBackground(detailIndex); // 상세페이지 넘길 때 배경 업데이트
                     }
                 }
             }
             
             // --- 초기화 및 이벤트 리스너 연결 ---
+            renderBackgrounds();
             renderCoverflow();
             renderDetailPages();
+            updateBackground(0); // 첫 번째 배경 활성화
             window.addEventListener('keydown', handleKeyDown);
             backButton.addEventListener('click', showCoverflowView);
         });
