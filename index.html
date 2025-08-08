@@ -81,6 +81,69 @@
             border: none;
             background-color: #000;
         }
+
+        /* --- 프로젝트 상세 정보 모달 --- */
+        .detail-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s, visibility 0.4s;
+            z-index: 1000;
+        }
+
+        .detail-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .detail-content {
+            background-color: var(--card-background);
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.4s;
+        }
+        
+        .detail-overlay.visible .detail-content {
+            transform: scale(1);
+        }
+
+        .detail-content h2 {
+            margin-top: 0;
+            color: var(--accent-color);
+        }
+        
+        .detail-content img {
+            width: 100%;
+            max-height: 40vh;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .detail-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 30px;
+            color: var(--text-color);
+            cursor: pointer;
+            line-height: 1;
+        }
     </style>
 </head>
 <body>
@@ -89,28 +152,38 @@
         <div class="carousel"></div>
     </div>
 
+    <!-- 프로젝트 상세 정보 표시를 위한 오버레이 -->
+    <div class="detail-overlay">
+        <div class="detail-content">
+            <span class="detail-close">&times;</span>
+            <h2 id="detail-title"></h2>
+            <img id="detail-image" src="" alt="Project Image">
+            <p id="detail-description"></p>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const carousel = document.querySelector('.carousel');
-            const body = document.body;
+            const detailOverlay = document.querySelector('.detail-overlay');
+            const detailClose = document.querySelector('.detail-close');
+            const detailTitle = document.getElementById('detail-title');
+            const detailImage = document.getElementById('detail-image');
+            const detailDescription = document.getElementById('detail-description');
 
             // ===================================================================
-            // --- 여기에 자신의 사진, 비디오, 그리고 연결될 링크를 추가하세요 ---
+            // --- 여기에 자신의 사진, 비디오, 그리고 프로젝트 설명을 추가하세요 ---
             // ===================================================================
             // data: '파일 경로 또는 웹 주소(URL)'
-            // link: '클릭 시 이동할 페이지 주소'
-            //
-            // 예시:
-            // { type: 'image/', data: 'images/artwork.png', name: '내 작품', link: 'project-page.html' }
-            // { type: 'image/', data: 'photo.jpg', name: '내 사진', link: 'https://github.com' }
+            // description: '프로젝트에 대한 상세 설명'
             //
             const items = [
-                { type: 'image/', data: 'https://placehold.co/800x600/f8b400/ffffff?text=Project+A', name: '프로젝트 A', link: 'https://github.com' },
-                { type: 'video/', data: 'https://www.w3schools.com/html/mov_bbb.mp4', name: '프로젝트 B', link: 'https://www.w3schools.com' },
-                { type: 'image/', data: 'https://placehold.co/800x600/e85a4f/ffffff?text=Project+C', name: '프로젝트 C', link: '#' },
-                { type: 'image/', data: 'interaction3.png', name: '새 이미지', link: 'project-detail.html' },
-                { type: 'image/', data: 'https://placehold.co/800x600/8e8d8a/ffffff?text=Project+D', name: '프로젝트 D', link: '#' },
-                { type: 'image/', data: 'https://placehold.co/800x600/5c5d7d/ffffff?text=Project+E', name: '프로젝트 E', link: '#' }
+                { type: 'image/', data: 'https://placehold.co/800x600/f8b400/ffffff?text=Project+A', name: '프로젝트 A', description: '이것은 프로젝트 A에 대한 설명입니다. React와 Node.js를 사용하여 만들었습니다.' },
+                { type: 'video/', data: 'https://www.w3schools.com/html/mov_bbb.mp4', name: '프로젝트 B', description: '프로젝트 B는 영상 처리 기술을 활용한 인터랙티브 아트워크입니다.' },
+                { type: 'image/', data: 'https://placehold.co/800x600/e85a4f/ffffff?text=Project+C', name: '프로젝트 C', description: '세 번째 프로젝트는 데이터 시각화에 초점을 맞춘 작업물입니다.' },
+                { type: 'image/', data: 'interaction3.png', name: '새 이미지', description: '이 이미지는 새로운 인터랙션 디자인 시안입니다.' },
+                { type: 'image/', data: 'https://placehold.co/800x600/8e8d8a/ffffff?text=Project+D', name: '프로젝트 D', description: '네 번째 프로젝트에 대한 설명입니다.' },
+                { type: 'image/', data: 'https://placehold.co/800x600/5c5d7d/ffffff?text=Project+E', name: '프로젝트 E', description: '마지막 프로젝트는 사용성과 미학을 모두 고려한 디자인입니다.' }
             ];
             // ===================================================================
 
@@ -119,23 +192,22 @@
             /** 모든 항목을 DOM에 렌더링하고 뷰를 업데이트합니다 */
             function render() {
                 carousel.innerHTML = ''; // 이전 항목 지우기
-                items.forEach(item => {
-                    const card = createCardElement(item);
+                items.forEach((item, index) => {
+                    const card = createCardElement(item, index);
                     carousel.appendChild(card);
                 });
                 updateFlow();
             }
 
             /** 단일 항목 카드에 대한 DOM 요소를 생성합니다 */
-            function createCardElement(item) {
+            function createCardElement(item, index) {
                 const card = document.createElement('div');
                 card.className = 'card';
 
-                // 카드 클릭 시 링크로 이동하는 이벤트 리스너 추가
+                // 카드 클릭 시 상세 정보 표시
                 card.addEventListener('click', () => {
-                    // 카드가 중앙에 활성화된 상태이고, 링크가 있을 때만 이동
-                    if (card.classList.contains('active') && item.link) {
-                        window.open(item.link, '_blank'); // 새 탭에서 링크 열기
+                    if (index === currentIndex) {
+                        showProjectDetails(item);
                     }
                 });
 
@@ -150,14 +222,22 @@
                     video.controls = true;
                     video.muted = true; // 자동재생을 위해 음소거
                     video.loop = true;  // 반복재생
-                    
-                    // 비디오 컨트롤 클릭 시 카드 링크가 실행되는 것을 방지
-                    video.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                    });
                     card.appendChild(video);
                 }
                 return card;
+            }
+
+            /** 프로젝트 상세 정보를 표시하는 함수 */
+            function showProjectDetails(item) {
+                detailTitle.textContent = item.name;
+                detailImage.src = item.data;
+                detailDescription.textContent = item.description;
+                detailOverlay.classList.add('visible');
+            }
+
+            /** 프로젝트 상세 정보를 숨기는 함수 */
+            function hideProjectDetails() {
+                detailOverlay.classList.remove('visible');
             }
 
             /** CSS transform을 적용하여 카드를 커버 플로우 레이아웃으로 배치합니다 */
@@ -177,14 +257,11 @@
                     if (offset === 0) {
                         transform = `rotateY(0deg) translateZ(100px) scale(1.1)`;
                         card.classList.add('active');
-                        // 중앙에 온 비디오는 재생 시도
                         const video = card.querySelector('video');
-                        if (video) video.play().catch(e => console.log("자동재생이 차단되었습니다."));
-
+                        if (video) video.play().catch(e => {});
                     } else {
                         transform = `translateX(${offset * gap}vh) rotateY(${-sign * rotation}deg) translateZ(-${zDepth}px)`;
                         card.classList.remove('active');
-                        // 중앙에서 벗어난 비디오는 일시정지
                         const video = card.querySelector('video');
                         if (video) video.pause();
                     }
@@ -192,19 +269,16 @@
                     card.style.transform = `translate(-50%, -50%) ${transform}`;
                     card.style.zIndex = cards.length - Math.abs(offset);
                     card.style.opacity = Math.abs(offset) > 2 ? '0' : '1';
-                    card.style.pointerEvents = (offset === 0) ? 'auto' : 'none';
+                    card.style.pointerEvents = 'auto'; // 모든 카드가 클릭 이벤트를 받을 수 있도록 변경
                 });
             }
 
             /** 키보드 네비게이션을 처리합니다 */
             function handleKeyDown(e) {
-                // Enter 키를 누르면 활성화된 카드의 링크로 이동
+                // Enter 키를 누르면 활성화된 카드의 상세 정보 표시
                 if (e.key === 'Enter') {
-                    const activeItem = items[currentIndex];
-                    if (activeItem && activeItem.link) {
-                        window.open(activeItem.link, '_blank');
-                        return; // 다른 키보드 이벤트 중지
-                    }
+                    showProjectDetails(items[currentIndex]);
+                    return;
                 }
 
                 if (items.length <= 1) return;
@@ -218,7 +292,6 @@
 
             /** 마우스 휠 스크롤을 처리합니다 */
             function handleWheel(e) {
-                if (items.length <= 1) return;
                 e.preventDefault();
                 if (e.deltaY > 0) {
                     currentIndex = (currentIndex + 1) % items.length;
@@ -232,6 +305,12 @@
             render(); // 페이지 로드 시 바로 콘텐츠 표시
             window.addEventListener('keydown', handleKeyDown);
             window.addEventListener('wheel', handleWheel, { passive: false });
+            detailClose.addEventListener('click', hideProjectDetails);
+            detailOverlay.addEventListener('click', (e) => {
+                if (e.target === detailOverlay) {
+                    hideProjectDetails();
+                }
+            });
         });
     </script>
 </body>
