@@ -20,10 +20,73 @@
             background-color: var(--background-color);
             color: var(--text-color);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overflow: hidden; /* 스크롤바 숨기기 */
+            overflow: hidden;
         }
 
-        /* --- 페이지 컨테이너 --- */
+        /* --- 뷰 전환 컨테이너 --- */
+        .view {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        .view.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* --- 커버 플로우 뷰 --- */
+        .scene {
+            perspective: 1200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .carousel {
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform var(--transition-speed) cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .card {
+            position: absolute;
+            width: 45vh;
+            height: 30vh;
+            top: 50%;
+            left: 50%;
+            transform-origin: center center;
+            transform: translate(-50%, -50%);
+            background-color: var(--card-background);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            transition:
+                transform var(--transition-speed) cubic-bezier(0.25, 1, 0.5, 1),
+                opacity var(--transition-speed) ease;
+            -webkit-box-reflect: below(10px) linear-gradient(transparent, transparent, #0004);
+        }
+        
+        .card.active {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 25px rgba(10, 132, 255, 0.5);
+            cursor: pointer;
+        }
+
+        .card img, .card video {
+            width: 100%; height: 100%; object-fit: contain; border: none; background-color: #000;
+        }
+
+        /* --- 상세 페이지 뷰 --- */
         .page-container {
             display: flex;
             width: 100%;
@@ -31,118 +94,70 @@
             transition: transform var(--transition-speed) cubic-bezier(0.68, -0.55, 0.27, 1.55);
         }
 
-        /* --- 개별 페이지 스타일 --- */
         .page {
-            width: 100vw;
-            height: 100vh;
-            flex-shrink: 0;
-            box-sizing: border-box;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            align-items: center;
-            gap: 40px;
-            padding: 5vw;
+            width: 100vw; height: 100vh; flex-shrink: 0; box-sizing: border-box;
+            display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 40px; padding: 5vw;
         }
         
-        /* 홀수 페이지는 이미지/설명 순서, 짝수 페이지는 설명/이미지 순서 */
-        .page:nth-child(even) {
-            direction: rtl; /* 내용 순서 반전 */
-        }
-        .page:nth-child(even) > * {
-            direction: ltr; /* 내용 자체의 방향은 정상으로 */
-        }
-
+        .page:nth-child(even) { direction: rtl; }
+        .page:nth-child(even) > * { direction: ltr; }
 
         .page-media {
-            width: 100%;
-            height: 70vh;
-            border-radius: 16px;
-            overflow: hidden;
+            width: 100%; height: 70vh; border-radius: 16px; overflow: hidden;
             box-shadow: 0 15px 40px var(--shadow-color);
         }
 
-        .page-media img,
-        .page-media video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .page-media img, .page-media video { width: 100%; height: 100%; object-fit: cover; }
         
-        .page-description h2 {
-            font-size: 3rem;
-            color: var(--accent-color);
-            margin-bottom: 20px;
-        }
-
-        .page-description p {
-            font-size: 1.2rem;
-            line-height: 1.8;
-        }
+        .page-description h2 { font-size: 3rem; color: var(--accent-color); margin-bottom: 20px; }
+        .page-description p { font-size: 1.2rem; line-height: 1.8; }
         
-        /* --- 네비게이션 화살표 --- */
-        .nav-arrow {
-            position: fixed;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 50px;
-            height: 50px;
-            background-color: rgba(44, 44, 46, 0.7);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            color: white;
-            cursor: pointer;
-            z-index: 100;
-            transition: transform 0.2s;
-            user-select: none;
+        /* --- 공통 UI (뒤로가기 버튼 등) --- */
+        .back-button {
+            position: fixed; top: 30px; left: 30px;
+            width: 50px; height: 50px; background-color: rgba(44, 44, 46, 0.7);
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-size: 24px; color: white; cursor: pointer; z-index: 100;
+            transition: transform 0.2s; user-select: none;
         }
-        .nav-arrow:hover {
-            transform: translateY(-50%) scale(1.1);
-        }
-        
-        .nav-arrow.left {
-            left: 30px;
-        }
-        
-        .nav-arrow.right {
-            right: 30px;
-        }
+        .back-button:hover { transform: scale(1.1); }
 
         /* 모바일 화면 대응 */
         @media (max-width: 768px) {
-            .page {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto 1fr;
-                text-align: center;
-            }
-            .page-media {
-                height: 40vh;
-            }
-            .page-description h2 {
-                font-size: 2rem;
-            }
-            .page-description p {
-                font-size: 1rem;
-            }
+            .page { grid-template-columns: 1fr; grid-template-rows: auto 1fr; text-align: center; }
+            .page-media { height: 40vh; }
+            .page-description h2 { font-size: 2rem; }
+            .page-description p { font-size: 1rem; }
         }
-
     </style>
 </head>
 <body>
 
-    <div class="page-container"></div>
+    <!-- 커버 플로우 뷰 -->
+    <div id="coverflow-view" class="view">
+        <div class="scene">
+            <div class="carousel"></div>
+        </div>
+    </div>
 
-    <!-- 네비게이션 화살표 -->
-    <div class="nav-arrow left">&#10094;</div>
-    <div class="nav-arrow right">&#10095;</div>
+    <!-- 상세 페이지 뷰 -->
+    <div id="detail-view" class="view hidden">
+        <div class="back-button">&#10094;</div>
+        <div class="page-container"></div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // 뷰 엘리먼트
+            const coverflowView = document.getElementById('coverflow-view');
+            const detailView = document.getElementById('detail-view');
+
+            // 커버 플로우 관련 엘리먼트
+            const carousel = document.querySelector('.carousel');
+
+            // 상세 페이지 관련 엘리먼트
             const pageContainer = document.querySelector('.page-container');
-            const navLeft = document.querySelector('.nav-arrow.left');
-            const navRight = document.querySelector('.nav-arrow.right');
+            const backButton = document.querySelector('.back-button');
 
             // ===================================================================
             // --- 여기에 자신의 사진, 비디오, 그리고 프로젝트 설명을 추가하세요 ---
@@ -157,100 +172,153 @@
             ];
             // ===================================================================
 
-            let currentIndex = 0;
+            let coverflowIndex = 0;
+            let detailIndex = 0;
 
-            /** 모든 항목을 페이지로 렌더링합니다 */
-            function render() {
-                pageContainer.innerHTML = ''; // 이전 항목 지우기
+            // --- 뷰 전환 함수 ---
+            function showDetailView(index) {
+                detailIndex = index;
+                pageContainer.style.transition = 'none'; // 전환 애니메이션 없이 바로 이동
+                updatePagePosition();
+                
+                setTimeout(() => {
+                    pageContainer.style.transition = 'transform var(--transition-speed) cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+                }, 50);
+
+                coverflowView.classList.add('hidden');
+                detailView.classList.remove('hidden');
+            }
+
+            function showCoverflowView() {
+                detailView.classList.add('hidden');
+                coverflowView.classList.remove('hidden');
+            }
+
+            // --- 커버 플로우 로직 ---
+            function renderCoverflow() {
+                carousel.innerHTML = '';
+                items.forEach((item, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    
+                    if (item.type === 'image') {
+                        const img = document.createElement('img');
+                        img.src = item.data;
+                        card.appendChild(img);
+                    } else if (item.type === 'video') {
+                        const video = document.createElement('video');
+                        video.src = item.data;
+                        video.muted = true;
+                        video.loop = true;
+                        card.appendChild(video);
+                    }
+                    
+                    card.addEventListener('click', () => {
+                        if (index === coverflowIndex) {
+                            showDetailView(index);
+                        }
+                    });
+
+                    carousel.appendChild(card);
+                });
+                updateCoverflow();
+            }
+
+            function updateCoverflow() {
+                const cards = document.querySelectorAll('.card');
+                const gap = 25, rotation = 50, zDepth = 400;
+
+                cards.forEach((card, i) => {
+                    const offset = i - coverflowIndex;
+                    const sign = Math.sign(offset);
+                    let transform = '';
+
+                    if (offset === 0) {
+                        transform = `rotateY(0deg) translateZ(100px) scale(1.1)`;
+                        card.classList.add('active');
+                        const video = card.querySelector('video');
+                        if (video) video.play().catch(e => {});
+                    } else {
+                        transform = `translateX(${offset * gap}vh) rotateY(${-sign * rotation}deg) translateZ(-${zDepth}px)`;
+                        card.classList.remove('active');
+                        const video = card.querySelector('video');
+                        if (video) video.pause();
+                    }
+                    
+                    card.style.transform = `translate(-50%, -50%) ${transform}`;
+                    card.style.zIndex = items.length - Math.abs(offset);
+                    card.style.opacity = Math.abs(offset) > 2 ? '0' : '1';
+                    card.style.pointerEvents = 'auto';
+                });
+            }
+
+            // --- 상세 페이지 로직 ---
+            function renderDetailPages() {
+                pageContainer.innerHTML = '';
                 items.forEach(item => {
-                    const page = createPageElement(item);
+                    const page = document.createElement('div');
+                    page.className = 'page';
+
+                    const mediaContainer = document.createElement('div');
+                    mediaContainer.className = 'page-media';
+
+                    if (item.type === 'image') {
+                        const img = document.createElement('img');
+                        img.src = item.data;
+                        mediaContainer.appendChild(img);
+                    } else if (item.type === 'video') {
+                        const video = document.createElement('video');
+                        video.src = item.data;
+                        video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true;
+                        mediaContainer.appendChild(video);
+                    }
+
+                    const descContainer = document.createElement('div');
+                    descContainer.className = 'page-description';
+                    descContainer.innerHTML = `<h2>${item.name}</h2><p>${item.description}</p>`;
+                    
+                    page.appendChild(mediaContainer);
+                    page.appendChild(descContainer);
                     pageContainer.appendChild(page);
                 });
-                updatePagePosition();
             }
 
-            /** 단일 프로젝트 페이지 요소를 생성합니다 */
-            function createPageElement(item) {
-                const page = document.createElement('div');
-                page.className = 'page';
-
-                const mediaContainer = document.createElement('div');
-                mediaContainer.className = 'page-media';
-
-                if (item.type === 'image') {
-                    const img = document.createElement('img');
-                    img.src = item.data;
-                    img.alt = item.name;
-                    mediaContainer.appendChild(img);
-                } else if (item.type === 'video') {
-                    const video = document.createElement('video');
-                    video.src = item.data;
-                    video.autoplay = true;
-                    video.muted = true;
-                    video.loop = true;
-                    video.playsInline = true; // iOS에서 전체화면 방지
-                    mediaContainer.appendChild(video);
-                }
-
-                const descriptionContainer = document.createElement('div');
-                descriptionContainer.className = 'page-description';
-                
-                const title = document.createElement('h2');
-                title.textContent = item.name;
-                
-                const description = document.createElement('p');
-                description.textContent = item.description;
-
-                descriptionContainer.appendChild(title);
-                descriptionContainer.appendChild(description);
-                
-                page.appendChild(mediaContainer);
-                page.appendChild(descriptionContainer);
-
-                return page;
-            }
-
-            /** 현재 인덱스에 맞춰 페이지 위치를 업데이트합니다 */
             function updatePagePosition() {
-                pageContainer.style.transform = `translateX(-${currentIndex * 100}vw)`;
+                pageContainer.style.transform = `translateX(-${detailIndex * 100}vw)`;
             }
 
-            function showNextPage() {
-                currentIndex = (currentIndex + 1) % items.length;
-                updatePagePosition();
-            }
-
-            function showPrevPage() {
-                currentIndex = (currentIndex - 1 + items.length) % items.length;
-                updatePagePosition();
-            }
-
-            /** 키보드 네비게이션을 처리합니다 */
+            // --- 이벤트 핸들러 ---
             function handleKeyDown(e) {
-                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-                    showNextPage();
-                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                    showPrevPage();
+                if (!coverflowView.classList.contains('hidden')) { // 커버플로우 활성화 시
+                    if (e.key === 'Enter') {
+                        showDetailView(coverflowIndex);
+                        return;
+                    }
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                        coverflowIndex = (coverflowIndex + 1) % items.length;
+                    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                        coverflowIndex = (coverflowIndex - 1 + items.length) % items.length;
+                    }
+                    updateCoverflow();
+                } else { // 상세페이지 활성화 시
+                    if (e.key === 'Escape') {
+                        showCoverflowView();
+                    }
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                        detailIndex = (detailIndex + 1) % items.length;
+                        updatePagePosition();
+                    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                        detailIndex = (detailIndex - 1 + items.length) % items.length;
+                        updatePagePosition();
+                    }
                 }
             }
-
-            /** 마우스 휠 스크롤을 처리합니다 */
-            function handleWheel(e) {
-                e.preventDefault();
-                if (e.deltaY > 0) {
-                    showNextPage();
-                } else {
-                    showPrevPage();
-                }
-            }
-
+            
             // --- 초기화 및 이벤트 리스너 연결 ---
-            render();
+            renderCoverflow();
+            renderDetailPages();
             window.addEventListener('keydown', handleKeyDown);
-            // 마우스 휠 이벤트는 너무 민감할 수 있어, 일단 비활성화. 필요시 주석 해제.
-            // window.addEventListener('wheel', handleWheel, { passive: false });
-            navLeft.addEventListener('click', showPrevPage);
-            navRight.addEventListener('click', showNextPage);
+            backButton.addEventListener('click', showCoverflowView);
         });
     </script>
 </body>
